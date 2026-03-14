@@ -1,0 +1,373 @@
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115年國中會考倒數計時器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            /* 網格筆記本背景風格 */
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        /* 確保數字等寬，倒數時畫面不會抖動 */
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        .quote-transition {
+            transition: opacity 0.5s ease-in-out;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4 text-slate-800">
+
+    <!-- 頂部裝飾條 -->
+    <div class="fixed top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-500 z-50"></div>
+
+    <div class="relative z-10 w-full max-w-4xl flex flex-col gap-8">
+        
+        <!-- 主倒數計時卡片 -->
+        <div class="glass-panel rounded-3xl p-8 md:p-12 shadow-[0_20px_50px_rgba(8,_112,_184,_0.07)] text-center relative overflow-hidden">
+            <!-- 裝飾用背景圓 -->
+            <div class="absolute -top-20 -right-20 w-64 h-64 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 z-0"></div>
+            <div class="absolute -bottom-20 -left-20 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 z-0"></div>
+            
+            <div class="relative z-10">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm mb-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    <span>115學年度 國中教育會考</span>
+                </div>
+                
+                <h1 class="text-4xl md:text-5xl font-black mb-3 tracking-tight">會考倒數計時</h1>
+                <p class="text-lg md:text-xl text-slate-500 mb-10 font-medium" id="target-date-display">2026年5月16日 08:20</p>
+
+                <!-- 倒數數字區 -->
+                <div class="flex flex-wrap justify-center gap-4 md:gap-8 mb-10" id="countdown-container">
+                    <!-- 天 -->
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white shadow-lg rounded-2xl w-20 h-24 md:w-32 md:h-36 flex items-center justify-center mb-3 border-b-4 border-indigo-500">
+                            <span id="days" class="text-4xl md:text-7xl font-black text-indigo-600 tabular-nums">00</span>
+                        </div>
+                        <span class="text-slate-600 font-bold text-sm md:text-lg">天 (Days)</span>
+                    </div>
+                    <!-- 時 -->
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white shadow-lg rounded-2xl w-20 h-24 md:w-32 md:h-36 flex items-center justify-center mb-3 border-b-4 border-blue-500">
+                            <span id="hours" class="text-4xl md:text-7xl font-black text-blue-600 tabular-nums">00</span>
+                        </div>
+                        <span class="text-slate-600 font-bold text-sm md:text-lg">時 (Hours)</span>
+                    </div>
+                    <!-- 分 -->
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white shadow-lg rounded-2xl w-20 h-24 md:w-32 md:h-36 flex items-center justify-center mb-3 border-b-4 border-sky-500">
+                            <span id="mins" class="text-4xl md:text-7xl font-black text-sky-600 tabular-nums">00</span>
+                        </div>
+                        <span class="text-slate-600 font-bold text-sm md:text-lg">分 (Mins)</span>
+                    </div>
+                    <!-- 秒 -->
+                    <div class="flex flex-col items-center">
+                        <div class="bg-white shadow-lg rounded-2xl w-20 h-24 md:w-32 md:h-36 flex items-center justify-center mb-3 border-b-4 border-teal-500 transition-all">
+                            <span id="secs" class="text-4xl md:text-7xl font-black text-teal-600 tabular-nums">00</span>
+                        </div>
+                        <span class="text-slate-600 font-bold text-sm md:text-lg">秒 (Secs)</span>
+                    </div>
+                </div>
+                
+                <!-- 結束訊息 (預設隱藏) -->
+                <div id="end-message" class="hidden text-3xl md:text-4xl font-black text-rose-600 mb-10">
+                    會考已經開始，祝各位金榜題名，發揮最強實力！
+                </div>
+
+                <!-- 學習進度條 -->
+                <div class="w-full max-w-2xl mx-auto mb-8 text-left">
+                    <div class="flex justify-between text-sm font-bold text-slate-500 mb-2">
+                        <span>國三開學 (25/8/30)</span>
+                        <span id="progress-text">努力計算中...</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-3 md:h-4 overflow-hidden shadow-inner">
+                        <div id="progress-bar" class="bg-gradient-to-r from-blue-400 to-indigo-500 h-3 md:h-4 rounded-full transition-all duration-1000 ease-out" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- 勵志語錄區 -->
+                <div class="max-w-xl mx-auto bg-slate-50 rounded-xl p-5 border border-slate-100 shadow-sm relative">
+                    <div class="absolute -top-3 -left-3 text-indigo-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1zM15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.999v2C17.999 16 17 16 17 17s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></svg>
+                    </div>
+                    <p id="quote" class="text-lg md:text-xl font-bold text-slate-700 quote-transition tracking-wide">
+                        「將來的你，一定會感謝現在拚命的自己。」
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 考程表區塊 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Day 1 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-lg border-t-4 border-t-blue-500">
+                <h2 class="text-2xl font-black mb-4 flex items-center gap-2 text-slate-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    第一天考程 (5/16 星期六)
+                </h2>
+                <ul class="space-y-2">
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">08:20 - 08:30</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">08:30 - 09:40</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-blue-200 pl-3">
+                            <span class="font-bold text-lg">社會</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">70分鐘</span>
+                        </div>
+                    </li>
+                    <!-- 休息 -->
+                    <li class="flex items-center py-1.5 px-3 rounded-lg border border-dashed border-slate-200">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">09:40 - 10:20</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3 flex items-center">
+                            <span class="text-slate-400 text-sm">休息時間</span>
+                        </div>
+                    </li>
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">10:20 - 10:30</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">10:30 - 11:50</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-blue-200 pl-3">
+                            <span class="font-bold text-lg">數學</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">80分鐘</span>
+                        </div>
+                    </li>
+                    <!-- 休息 -->
+                    <li class="flex items-center py-1.5 px-3 rounded-lg border border-dashed border-slate-200">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">11:50 - 13:40</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3 flex items-center">
+                            <span class="text-slate-400 text-sm">休息時間</span>
+                        </div>
+                    </li>
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">13:40 - 13:50</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">13:50 - 15:00</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-blue-200 pl-3">
+                            <span class="font-bold text-lg">國文</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">70分鐘</span>
+                        </div>
+                    </li>
+                    <!-- 休息 -->
+                    <li class="flex items-center py-1.5 px-3 rounded-lg border border-dashed border-slate-200">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">15:00 - 15:40</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3 flex items-center">
+                            <span class="text-slate-400 text-sm">休息時間</span>
+                        </div>
+                    </li>
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">15:40 - 15:50</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">15:50 - 16:40</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-blue-200 pl-3">
+                            <span class="font-bold text-lg">寫作測驗</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">50分鐘</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Day 2 -->
+            <div class="glass-panel rounded-2xl p-6 shadow-lg border-t-4 border-t-teal-500">
+                <h2 class="text-2xl font-black mb-4 flex items-center gap-2 text-slate-800">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-teal-500"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>
+                    第二天考程 (5/17 星期日)
+                </h2>
+                <ul class="space-y-2">
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">08:20 - 08:30</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">08:30 - 09:40</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-teal-200 pl-3">
+                            <span class="font-bold text-lg">自然</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">70分鐘</span>
+                        </div>
+                    </li>
+                    <!-- 休息 -->
+                    <li class="flex items-center py-1.5 px-3 rounded-lg border border-dashed border-slate-200">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">09:40 - 10:20</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3 flex items-center">
+                            <span class="text-slate-400 text-sm">休息時間</span>
+                        </div>
+                    </li>
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">10:20 - 10:30</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">10:30 - 11:30</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-teal-200 pl-3">
+                            <span class="font-bold text-lg">英語 (閱讀)</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">60分鐘</span>
+                        </div>
+                    </li>
+                    <!-- 休息 -->
+                    <li class="flex items-center py-1.5 px-3 rounded-lg border border-dashed border-slate-200">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">11:30 - 12:00</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3 flex items-center">
+                            <span class="text-slate-400 text-sm">休息時間</span>
+                        </div>
+                    </li>
+                    <!-- 說明 -->
+                    <li class="flex items-center py-1.5 px-3 bg-slate-50/80 rounded-lg">
+                        <span class="w-24 shrink-0 text-slate-400 text-xs font-medium">12:00 - 12:05</span>
+                        <div class="flex-1 ml-2 border-l-2 border-slate-200 pl-3">
+                            <span class="text-slate-500 text-sm font-medium">考試說明</span>
+                        </div>
+                    </li>
+                    <li class="flex items-center p-3 bg-white rounded-lg shadow-sm border border-slate-100">
+                        <span class="w-24 shrink-0 text-slate-500 font-semibold text-sm">12:05 - 12:30</span>
+                        <div class="flex-1 flex justify-between items-center ml-2 border-l-2 border-teal-200 pl-3">
+                            <span class="font-bold text-lg">英語 (聽力)</span>
+                            <span class="text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded">25分鐘</span>
+                        </div>
+                    </li>
+                </ul>
+                
+                <!-- 填補空間的插圖小語 -->
+                <div class="mt-8 text-center text-teal-600/70 font-medium">
+                    <p>堅持到底，你比想像中更強大！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="text-center text-slate-400 text-sm mt-4">
+            設計理念：為每一位為夢想奮鬥的國中生加油。保持專注，不留遺憾。
+        </div>
+
+    </div>
+
+    <!-- Javascript 邏輯 -->
+    <script>
+        // 目標時間：115年會考第一節考試預備時間 (2026-05-16 08:20:00)
+        // 使用 ISO 格式加上時區，確保在任何設備上都精準對齊台灣時間
+        const targetDate = new Date('2026-05-16T08:20:00+08:00').getTime();
+        
+        // 國三開學日：用來計算進度條 (大約抓 2025-08-30)
+        const startDate = new Date('2025-08-30T00:00:00+08:00').getTime();
+
+        // 取得 DOM 元素
+        const elDays = document.getElementById('days');
+        const elHours = document.getElementById('hours');
+        const elMins = document.getElementById('mins');
+        const elSecs = document.getElementById('secs');
+        const elContainer = document.getElementById('countdown-container');
+        const elMessage = document.getElementById('end-message');
+        const elProgressBar = document.getElementById('progress-bar');
+        const elProgressText = document.getElementById('progress-text');
+
+        // 倒數計時主函數
+        function updateTimer() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            // 計算進度條
+            let progress = ((now - startDate) / (targetDate - startDate)) * 100;
+            if (progress > 100) progress = 100;
+            if (progress < 0) progress = 0;
+            elProgressBar.style.width = progress + '%';
+            elProgressText.innerText = `國三旅程已推進 ${progress.toFixed(1)}%`;
+
+            // 如果時間到了
+            if (distance <= 0) {
+                elDays.innerText = "00";
+                elHours.innerText = "00";
+                elMins.innerText = "00";
+                elSecs.innerText = "00";
+                
+                elContainer.classList.add('hidden');
+                elMessage.classList.remove('hidden');
+                return;
+            }
+
+            // 時間轉換計算
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // 更新畫面 (補零)
+            elDays.innerText = days.toString().padStart(2, '0');
+            elHours.innerText = hours.toString().padStart(2, '0');
+            elMins.innerText = minutes.toString().padStart(2, '0');
+            elSecs.innerText = seconds.toString().padStart(2, '0');
+        }
+
+        // 初始執行一次，避免畫面延遲
+        updateTimer();
+        // 每秒更新
+        setInterval(updateTimer, 1000);
+
+        // --- 勵志語錄輪播邏輯 ---
+        const quotes = [
+            "「將來的你，一定會感謝現在拚命的自己。」",
+            "「成功不是憑夢想和希望，而是憑努力和實踐。」",
+            "「沒有暗礁，哪能激起美麗的浪花？」",
+            "「讀書很苦，但比起未來的遺憾，這點苦算不了什麼。」",
+            "「現在的努力，是為了未來擁有更多選擇的權利。」",
+            "「會考只是人生的一個中繼站，盡力就好，不留遺憾。」",
+            "「放棄只要一句話，堅持卻需要一輩子。」",
+            "「寧願辛苦一陣子，不要辛苦一輩子。」",
+            "「汗水不會白流，每一分努力都在為成功鋪路。」",
+            "「相信自己，你的潛力遠比想像中巨大！」"
+        ];
+
+        let quoteIndex = 0;
+        const quoteEl = document.getElementById('quote');
+
+        setInterval(() => {
+            // 淡出
+            quoteEl.style.opacity = 0;
+            
+            setTimeout(() => {
+                // 換句子
+                quoteIndex = (quoteIndex + 1) % quotes.length;
+                quoteEl.innerText = quotes[quoteIndex];
+                // 淡入
+                quoteEl.style.opacity = 1;
+            }, 500); // 等待淡出動畫完成 (與 CSS transition 匹配)
+            
+        }, 8000); // 每 8 秒換一句
+    </script>
+</body>
+</html>
